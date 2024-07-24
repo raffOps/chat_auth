@@ -1,0 +1,16 @@
+INSERT INTO public.user (id,
+                         username,
+                         email,
+                         auth_type,
+                         role,
+                         status,
+                         login_history,
+                         created_at,
+                         updated_at,
+                         deleted_at)
+VALUES ('ac554921-1b75-43bd-9e1d-e17dfb38f6c3', 'jon', 'john@doe', 1, 2, 1, NULL, '2024-05-07 12:27:58',
+        '2024-05-07 12:27:58', NULL),
+       ('b0a860ee-35ac-478a-8961-069fe2b8dfc1', 'jane', 'jane@doe', 2, 1, 1, NULL, '2024-05-07 12:27:58',
+        '2024-05-07 12:27:58', NULL),
+       ('4caa43ff-7218-4c07-b4a2-f40d0a0555b1', 'mark', 'mark@doe', 1, 2, 1, NULL, '2024-05-07 12:27:58',
+        '2024-05-07 12:27:58', NULL);

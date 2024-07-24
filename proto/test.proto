@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+option go_package = "./test/pb";
+
+message TestRequest {
+  string body = 1;
+}
+
+message TestResponse {
+  string body = 1;
+}
+
+service Test {
+  rpc TestInterceptor(stream TestRequest) returns (stream TestResponse) {}
+}

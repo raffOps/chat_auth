@@ -1,3 +1,8 @@
+include .env
+export $(shell sed 's/=.*//' .env)
+
+SONAR_PATH = ~/sonar/bin
+
 # Simple Makefile for a Go project
 
 # Build the application
@@ -34,7 +39,8 @@ docker-down:
 # Test the application
 test:
 	@echo "Testing..."
-	@go test ./tests -v
+	@go test ./internal/app/sessionManager/service -v
+	@go test ./internal/app/user/repository -v
 
 # Clean the binary
 clean:
@@ -58,4 +64,26 @@ watch:
 	    fi; \
 	fi
 
-.PHONY: all build run test clean
+migration-%:
+	@migrate create -ext sql -dir ./internal/database/postgres/migrations $*
+
+migrate:
+	migrate -path ./internal/database/postgres/migrations -database "postgres://${DB_USERNAME}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_DATABASE}?sslmode=disable" up
+
+mock:
+	rm -rf internal/mocks/*
+	mockery --config .mockery.yaml
+
+
+sonar:
+	echo $(SONAR_PATH)
+	 ${SONAR_PATH}/sonar-scanner \
+	  -Dsonar.host.url=http://localhost:9000 \
+	  -Dsonar.token=${SONAR_TOKEN}
+
+protoc:
+	rm -rf test/pb
+	protoc -Iproto --go-grpc_out=. --go_out=. proto/*.proto
+
+.PHONY: all build run test clean mock
+

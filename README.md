@@ -1,10 +1,9 @@
-# Project auth
+# Chat Auth Service
 
-One Paragraph of project description goes here
+This is a simple chat authentication service that use OAuth2 to authenticate users. The service is written in Go and
+uses Postgres for store user data and Redis for session management.
 
 ## Getting Started
-
-These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. See deployment for notes on how to deploy the project on a live system.
 
 ## MakeFile
 

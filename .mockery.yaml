@@ -1,0 +1,22 @@
+dir: "internal/mocks/{{.PackageName}}"
+mockname: "{{.InterfaceName}}"
+outpkg: "{{.PackageName}}"
+with-expecter: true
+
+packages:
+  github.com/raffops/auth/internal/app/user:
+    interfaces:
+      ReaderRepository:
+      WriterRepository:
+      ReaderWriterRepository:
+  github.com/raffops/auth/internal/app/auth:
+    interfaces:
+      Controller:
+      Service:
+  github.com/raffops/auth/internal/app/sessionManager:
+    interfaces:
+      Repository:
+      Service:
+  google.golang.org/grpc:
+    interfaces:
+      ServerStream:

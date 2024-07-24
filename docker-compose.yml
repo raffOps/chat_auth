@@ -1,6 +1,16 @@
-version: '3.8'
-
 services:
+  sonar:
+    image: sonarqube:latest
+    env_file:
+      - .env
+    container_name: sonar
+    ports:
+      - 9000:9000
+    volumes:
+      - sonar-data:/opt/sonarqube/data
+      - sonar-extensions:/opt/sonarqube/extensions
+      - sonar-logs:/opt/sonarqube/logs
+      - sonar-conf:/opt/sonarqube/conf
   psql:
     image: postgres:latest
     environment:
@@ -14,3 +24,8 @@ services:
 
 volumes:
   psql_volume:
+  redis-data:
+  sonar-data:
+  sonar-extensions:
+  sonar-logs:
+  sonar-conf:
