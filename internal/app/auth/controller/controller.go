@@ -87,11 +87,6 @@ func (c *controller) SignUp(w http.ResponseWriter, r *http.Request) {
 	role := session.Values["role"].(string)
 	token, errSignup := c.authService.SignUp(ctx, username, email, authType, role)
 
-	if errSignup != nil && errors.Is(errSignup.SvcError(), errs.ErrInternal) {
-		http.Error(w, errs.ErrInternal.Error(), http.StatusInternalServerError)
-		return
-	}
-
 	if errSignup != nil {
 		http.Error(w, errSignup.Error(), errs.GetHttpStatusCode(errSignup))
 		return
@@ -170,17 +165,12 @@ func (c *controller) Callback(w http.ResponseWriter, r *http.Request) {
 		redirectToSignUp(w, r, session, u.Email, authType)
 		return
 	}
-	if errGetUser != nil && errors.Is(errGetUser.SvcError(), errs.ErrInternal) {
+	if errGetUser != nil {
 		http.Error(w, errs.ErrInternal.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	token, errLogin := c.authService.Login(ctx, getUser.Username, u.Email)
-	if errLogin != nil && errors.Is(errLogin.SvcError(), errs.ErrInternal) {
-		http.Error(w, errs.ErrInternal.Error(), http.StatusInternalServerError)
-		return
-	}
-
 	if errLogin != nil {
 		http.Error(w, errLogin.Error(), errs.GetHttpStatusCode(errLogin))
 		return
