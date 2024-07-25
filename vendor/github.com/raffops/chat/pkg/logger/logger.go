@@ -7,7 +7,7 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
-var log *zap.Logger
+var Logger *zap.Logger
 
 func init() {
 	var err error
@@ -25,26 +25,26 @@ func init() {
 	encoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
 	config.EncoderConfig = encoderConfig
 
-	log, err = config.Build(zap.AddCallerSkip(1))
+	Logger, err = config.Build(zap.AddCallerSkip(1))
 	if err != nil {
 		panic(err)
 	}
 }
 
 func Info(message string, fields ...zap.Field) {
-	log.Info(message, fields...)
+	Logger.Info(message, fields...)
 }
 
 func Debug(message string, fields ...zap.Field) {
-	log.Debug(message, fields...)
+	Logger.Debug(message, fields...)
 }
 
 func Error(message string, fields ...zap.Field) {
-	log.Error(message, fields...)
+	Logger.Error(message, fields...)
 }
 
 func Fatal(message string, fields ...zap.Field) {
-	log.Fatal(message, fields...)
+	Logger.Fatal(message, fields...)
 }
 
 func String(key string, value string) zap.Field {
