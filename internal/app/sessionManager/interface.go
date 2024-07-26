@@ -21,7 +21,7 @@ type Repository interface {
 type Service interface {
 	CreateSession(ctx context.Context, id string, payload map[string]interface{}) (string, errs.ChatError)
 	FinishSession(ctx context.Context, id string) errs.ChatError
-	RefreshSession(ctx context.Context, userId, sessionId string) errs.ChatError
+	RefreshSession(ctx context.Context, sessionId string) errs.ChatError
 	CheckRestSession(next http.HandlerFunc, roles []authModels.RoleId) http.HandlerFunc
 	CheckGrpcSession(
 		srv any,

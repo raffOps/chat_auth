@@ -297,17 +297,17 @@ func (_c *Service_GetRoles_Call) RunAndReturn(run func(context.Context, string) 
 	return _c
 }
 
-// RefreshSession provides a mock function with given fields: ctx, userId, sessionId
-func (_m *Service) RefreshSession(ctx context.Context, userId string, sessionId string) errs.ChatError {
-	ret := _m.Called(ctx, userId, sessionId)
+// RefreshSession provides a mock function with given fields: ctx, sessionId
+func (_m *Service) RefreshSession(ctx context.Context, sessionId string) errs.ChatError {
+	ret := _m.Called(ctx, sessionId)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RefreshSession")
 	}
 
 	var r0 errs.ChatError
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) errs.ChatError); ok {
-		r0 = rf(ctx, userId, sessionId)
+	if rf, ok := ret.Get(0).(func(context.Context, string) errs.ChatError); ok {
+		r0 = rf(ctx, sessionId)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(errs.ChatError)
@@ -324,15 +324,14 @@ type Service_RefreshSession_Call struct {
 
 // RefreshSession is a helper method to define mock.On call
 //   - ctx context.Context
-//   - userId string
 //   - sessionId string
-func (_e *Service_Expecter) RefreshSession(ctx interface{}, userId interface{}, sessionId interface{}) *Service_RefreshSession_Call {
-	return &Service_RefreshSession_Call{Call: _e.mock.On("RefreshSession", ctx, userId, sessionId)}
+func (_e *Service_Expecter) RefreshSession(ctx interface{}, sessionId interface{}) *Service_RefreshSession_Call {
+	return &Service_RefreshSession_Call{Call: _e.mock.On("RefreshSession", ctx, sessionId)}
 }
 
-func (_c *Service_RefreshSession_Call) Run(run func(ctx context.Context, userId string, sessionId string)) *Service_RefreshSession_Call {
+func (_c *Service_RefreshSession_Call) Run(run func(ctx context.Context, sessionId string)) *Service_RefreshSession_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string))
+		run(args[0].(context.Context), args[1].(string))
 	})
 	return _c
 }
@@ -342,7 +341,7 @@ func (_c *Service_RefreshSession_Call) Return(_a0 errs.ChatError) *Service_Refre
 	return _c
 }
 
-func (_c *Service_RefreshSession_Call) RunAndReturn(run func(context.Context, string, string) errs.ChatError) *Service_RefreshSession_Call {
+func (_c *Service_RefreshSession_Call) RunAndReturn(run func(context.Context, string) errs.ChatError) *Service_RefreshSession_Call {
 	_c.Call.Return(run)
 	return _c
 }

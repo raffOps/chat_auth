@@ -2,6 +2,8 @@ package auth
 
 import (
 	"context"
+	"github.com/raffops/auth/internal/app/auth/model"
+	"github.com/raffops/auth/internal/app/user/models"
 	"github.com/raffops/chat/pkg/errs"
 	"net/http"
 )
@@ -13,6 +15,12 @@ type Controller interface {
 }
 
 type Service interface {
-	SignUp(ctx context.Context, username, email, authType, role string) (string, errs.ChatError)
+	SignUp(
+		ctx context.Context,
+		username, email string,
+		authType user.AuthTypeId,
+		role auth.RoleId,
+	) (string, errs.ChatError)
 	Login(ctx context.Context, username, email string) (string, errs.ChatError)
+	Refresh(ctx context.Context, token string) errs.ChatError
 }

@@ -16,12 +16,17 @@ type defaultService struct {
 	sessionSrv sessionManager.Service
 }
 
-func (s defaultService) SignUp(ctx context.Context, username, email, authType, role string) (string, errs.ChatError) {
+func (s defaultService) SignUp(
+	ctx context.Context,
+	username, email string,
+	authType userModels.AuthTypeId,
+	role authModels.RoleId,
+) (string, errs.ChatError) {
 	u := userModels.User{
 		Username: username,
 		Email:    email,
-		AuthType: userModels.MapAuthTypeString[authType],
-		Role:     authModels.MapRoleString[role],
+		AuthType: authType,
+		Role:     role,
 		Status:   userModels.StatusActive,
 	}
 	tx, _ := s.userRepo.GetDB().BeginTx(ctx, nil)
@@ -35,7 +40,10 @@ func (s defaultService) SignUp(ctx context.Context, username, email, authType, r
 	sessionId, err := s.sessionSrv.CreateSession(
 		ctx,
 		fmt.Sprintf("user:%s", createUser.Id),
-		map[string]interface{}{"role": createUser.Role, "status": createUser.Status, "auth_type": createUser.AuthType},
+		map[string]interface{}{"userId": createUser.Id,
+			"role":      createUser.Role,
+			"status":    createUser.Status,
+			"auth_type": createUser.AuthType},
 	)
 	if err != nil {
 		return "", errs.NewError(errs.ErrInternal, err)
@@ -62,6 +70,10 @@ func (s defaultService) Login(ctx context.Context, username, email string) (stri
 		u.Id,
 		map[string]interface{}{"role": u.Role, "status": u.Status, "auth_type": u.AuthType},
 	)
+}
+
+func (s defaultService) Refresh(ctx context.Context, token string) errs.ChatError {
+	s.sessionSrv.RefreshSession(ctx, token)
 }
 
 func NewDefaultService(

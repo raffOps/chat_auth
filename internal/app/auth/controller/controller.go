@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -14,11 +13,13 @@ import (
 	"github.com/raffops/auth/internal/app/auth"
 	authModels "github.com/raffops/auth/internal/app/auth/model"
 	"github.com/raffops/auth/internal/app/user"
+	userModels "github.com/raffops/auth/internal/app/user/models"
 	"github.com/raffops/chat/pkg/errs"
 	"github.com/raffops/chat/pkg/logger"
 	"go.uber.org/zap"
 	"net/http"
 	"os"
+	"strings"
 )
 
 func init() {
@@ -79,13 +80,34 @@ func (c *controller) SignUp(w http.ResponseWriter, r *http.Request) {
 		)
 		return
 	}
-	ctx := context.Background()
+	ctx := r.Context()
 
 	username := session.Values["username"].(string)
 	email := session.Values["email"].(string)
 	authType := session.Values["authType"].(string)
 	role := session.Values["role"].(string)
-	token, errSignup := c.authService.SignUp(ctx, username, email, authType, role)
+
+	authTypeId, ok := userModels.MapAuthTypeString[authType]
+	if !ok {
+		http.Error(w,
+			errs.NewError(errs.ErrBadRequest,
+				fmt.Errorf("auth type %s not found", authType),
+			).Error(),
+			http.StatusInternalServerError,
+		)
+		return
+	}
+	roleId, ok := authModels.MapRoleString[role]
+	if !ok {
+		http.Error(w,
+			errs.NewError(errs.ErrBadRequest,
+				fmt.Errorf("role %s not found", role),
+			).Error(),
+			http.StatusInternalServerError,
+		)
+		return
+	}
+	token, errSignup := c.authService.SignUp(ctx, username, email, authTypeId, roleId)
 
 	if errSignup != nil {
 		http.Error(w, errSignup.Error(), errs.GetHttpStatusCode(errSignup))
@@ -157,7 +179,7 @@ func (c *controller) Callback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := context.Background()
+	ctx := r.Context()
 	username := session.Values["username"]
 	authType := mux.Vars(r)["provider"]
 	getUser, errGetUser := c.userRepo.GetUser(ctx, "username", username)
@@ -166,7 +188,7 @@ func (c *controller) Callback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if errGetUser != nil {
-		http.Error(w, errs.ErrInternal.Error(), http.StatusInternalServerError)
+		http.Error(w, errGetUser.Error(), errs.GetHttpStatusCode(errGetUser))
 		return
 	}
 
@@ -190,6 +212,20 @@ func (c *controller) Callback(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
+func (c *controller) Refresh(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	bearerToken := r.Header.Get("Authorization")
+	token, ok := strings.CutPrefix(bearerToken, "Bearer ")
+	if !ok || token == "" {
+		http.Error(
+			w,
+			errs.NewError(errs.ErrNotAuthorized, fmt.Errorf("token not found")).Error(),
+			http.StatusUnauthorized,
+		)
+	}
+	c.authService.Refresh(ctx, token)
+}
+
 func redirectToSignUp(
 	w http.ResponseWriter,
 	r *http.Request,
@@ -204,7 +240,7 @@ func redirectToSignUp(
 	if err != nil {
 		http.Error(
 			w,
-			errs.NewError(errs.ErrInternal, nil).Error(),
+			errs.NewError(errs.ErrInternal, err).Error(),
 			http.StatusInternalServerError,
 		)
 		return

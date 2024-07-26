@@ -43,9 +43,19 @@ func sanityCheck() {
 	}
 }
 
-func (s service) RefreshSession(ctx context.Context, userId, sessionId string) errs.ChatError {
+func (s service) RefreshSession(ctx context.Context, sessionId string) errs.ChatError {
+	sessionValues, err := s.repo.GetEncryptedHashmap(ctx, sessionId, s.secret)
+	if err != nil {
+		return err
+	}
+
+	userId, ok := sessionValues["userId"].(string)
+	if !ok {
+		return errs.NewError(errs.ErrInternal, fmt.Errorf("userId not found"))
+	}
+
 	timeoutAt := time.Now().Add(s.timeout)
-	err := s.repo.ExpireAt(ctx, "session:"+sessionId, timeoutAt)
+	err = s.repo.ExpireAt(ctx, "session:"+sessionId, timeoutAt)
 	if err != nil {
 		return err
 	}

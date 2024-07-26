@@ -310,7 +310,7 @@ func (s *SessionManagerTestSuite) refreshJohnFirstSession() {
 	firstTimeoutOnUserSessionsInt, _ := strconv.Atoi(firstTimeoutOnUserSessions)
 
 	time.Sleep(time.Duration(1) * time.Second)
-	errRefresh := s.sessionSrv.RefreshSession(s.ctx, s.johnUser.Id, s.johnFirstSession)
+	errRefresh := s.sessionSrv.RefreshSession(s.ctx, s.johnFirstSession)
 	if errRefresh != nil {
 		s.T().Fatalf("RefreshSession() error = %v", errRefresh)
 	}
