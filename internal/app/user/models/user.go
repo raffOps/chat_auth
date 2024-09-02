@@ -1,8 +1,9 @@
 package user
 
 import (
-	authModels "github.com/raffops/auth/internal/app/auth/model"
 	"time"
+
+	authModels "github.com/raffops/chat_auth/internal/app/auth/model"
 )
 
 type LoginHistory struct {

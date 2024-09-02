@@ -2,17 +2,18 @@ package server
 
 import (
 	"fmt"
-	"github.com/raffops/auth/internal/app/auth"
-	"github.com/raffops/auth/internal/app/sessionManager"
 	"net/http"
 	"os"
 	"strconv"
 	"time"
 
+	"github.com/raffops/chat_auth/internal/app/auth"
+	"github.com/raffops/chat_auth/internal/app/sessionManager"
+
 	_ "github.com/joho/godotenv/autoload"
 
-	database "github.com/raffops/chat/pkg/database/postgres"
-	"github.com/raffops/chat/pkg/logger"
+	database "github.com/raffops/chat_commons/pkg/database/postgres"
+	"github.com/raffops/chat_commons/pkg/logger"
 )
 
 type Server struct {

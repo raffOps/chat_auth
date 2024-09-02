@@ -1,8 +1,8 @@
-module github.com/raffops/auth
+module github.com/raffops/chat_auth
 
-go 1.22
+go 1.23
 
-toolchain go1.22.5
+toolchain go1.23.0
 
 require (
 	github.com/aws/aws-sdk-go v1.55.3
@@ -12,7 +12,7 @@ require (
 	github.com/joho/godotenv v1.5.1
 	github.com/lib/pq v1.10.9
 	github.com/markbates/goth v1.80.0
-	github.com/raffops/chat v0.0.0-20240731185018-2ab82744f095
+	github.com/raffops/chat_commons v0.0.0-20240902171052-2582060af3e7
 	github.com/redis/go-redis/v9 v9.6.0
 	github.com/stretchr/testify v1.9.0
 	go.uber.org/zap v1.27.0

@@ -4,18 +4,19 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	auth "github.com/raffops/auth/internal/app/auth/model"
-	userModels "github.com/raffops/auth/internal/app/user/models"
-	userRepo "github.com/raffops/auth/internal/app/user/repository"
-	"github.com/raffops/auth/internal/app/user/repository/migrations"
-	database "github.com/raffops/chat/pkg/database/postgres"
-	"github.com/raffops/chat/pkg/errs"
 	"log"
 	"os"
 	"path"
 	"reflect"
 	"testing"
 	"time"
+
+	auth "github.com/raffops/chat_auth/internal/app/auth/model"
+	userModels "github.com/raffops/chat_auth/internal/app/user/models"
+	userRepo "github.com/raffops/chat_auth/internal/app/user/repository"
+	"github.com/raffops/chat_auth/internal/app/user/repository/migrations"
+	database "github.com/raffops/chat_commons/pkg/database/postgres"
+	"github.com/raffops/chat_commons/pkg/errs"
 )
 
 var (

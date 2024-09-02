@@ -1,9 +1,10 @@
 package service
 
 import (
-	"github.com/raffops/auth/internal/app/auth/model"
 	"net/http"
 	"strings"
+
+	auth "github.com/raffops/chat_auth/internal/app/auth/model"
 )
 
 func (s service) CheckRestSession(next http.HandlerFunc, roles []auth.RoleId) http.HandlerFunc {

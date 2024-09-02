@@ -3,11 +3,12 @@ package user
 import (
 	"database/sql"
 	"fmt"
-	auth "github.com/raffops/auth/internal/app/auth/model"
-	userModels "github.com/raffops/auth/internal/app/user/models"
 	"reflect"
 	"testing"
 	"time"
+
+	auth "github.com/raffops/chat_auth/internal/app/auth/model"
+	userModels "github.com/raffops/chat_auth/internal/app/user/models"
 )
 
 var (

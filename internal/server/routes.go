@@ -2,12 +2,13 @@ package server
 
 import (
 	"encoding/json"
-	"github.com/raffops/auth/internal/app/auth"
-	authModel "github.com/raffops/auth/internal/app/auth/model"
-	"github.com/raffops/auth/internal/app/sessionManager"
-	"github.com/raffops/chat/pkg/logger"
-	"go.uber.org/zap"
 	"net/http"
+
+	"github.com/raffops/chat_auth/internal/app/auth"
+	authModel "github.com/raffops/chat_auth/internal/app/auth/model"
+	"github.com/raffops/chat_auth/internal/app/sessionManager"
+	"github.com/raffops/chat_commons/pkg/logger"
+	"go.uber.org/zap"
 
 	"github.com/gorilla/mux"
 )

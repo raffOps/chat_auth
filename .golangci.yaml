@@ -3,7 +3,13 @@ issues:
     - path: vendor/.*
       linters:
         - "*"
-    - path: internal/mocks/.*
+    - path: tests/mocks/.*
+      linters:
+        - "*"
+    - path: volume
+      linters:
+        - "*"
+    - path: tmp
       linters:
         - "*"
 linters:

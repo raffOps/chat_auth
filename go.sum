@@ -141,8 +141,8 @@ github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZN
 github.com/power-devops/perfstat v0.0.0-20210106213030-5aafc221ea8c/go.mod h1:OmDBASR4679mdNQnz2pUhc2G8CO2JrUAVFDRBDP/hJE=
 github.com/power-devops/perfstat v0.0.0-20240221224432-82ca36839d55 h1:o4JXh1EVt9k/+g42oCprj/FisM4qX9L3sZB3upGN2ZU=
 github.com/power-devops/perfstat v0.0.0-20240221224432-82ca36839d55/go.mod h1:OmDBASR4679mdNQnz2pUhc2G8CO2JrUAVFDRBDP/hJE=
-github.com/raffops/chat v0.0.0-20240731185018-2ab82744f095 h1:ml4j7oKErqnKjTTUgU4LutEM/Mlm0RaI3qJCgFWT7/o=
-github.com/raffops/chat v0.0.0-20240731185018-2ab82744f095/go.mod h1:HGAn54k0eS4RIELKiD3K9hKD4MJV/FDUlKZUjnV9qsk=
+github.com/raffops/chat_commons v0.0.0-20240902171052-2582060af3e7 h1:ngO7MYFVQ1V9JDJyxJEIkMbUlNeEZ5BUs/QOxEc4Ojw=
+github.com/raffops/chat_commons v0.0.0-20240902171052-2582060af3e7/go.mod h1:nzk3ggi1LHnRMkRVagCNHff1HYDiiIlTX05muLBLS8o=
 github.com/redis/go-redis/v9 v9.6.0 h1:NLck+Rab3AOTHw21CGRpvQpgTrAU4sgdCswqGtlhGRA=
 github.com/redis/go-redis/v9 v9.6.0/go.mod h1:hdY0cQFCN4fnSYT6TkisLufl/4W5UIXyv0b/CLO2V2M=
 github.com/rogpeppe/go-internal v1.12.0 h1:exVL4IDcn6na9z1rAb56Vxr+CgyK3nn3O+epU5NdKM8=

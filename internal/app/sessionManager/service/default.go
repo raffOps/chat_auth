@@ -3,15 +3,16 @@ package service
 import (
 	"context"
 	"fmt"
-	authModels "github.com/raffops/auth/internal/app/auth/model"
-	"github.com/raffops/auth/internal/app/sessionManager"
-	"github.com/raffops/chat/pkg/errs"
-	"github.com/raffops/chat/pkg/logger"
-	"github.com/raffops/chat/pkg/uuid"
-	"go.uber.org/zap"
 	"os"
 	"strings"
 	"time"
+
+	authModels "github.com/raffops/chat_auth/internal/app/auth/model"
+	"github.com/raffops/chat_auth/internal/app/sessionManager"
+	"github.com/raffops/chat_commons/pkg/errs"
+	"github.com/raffops/chat_commons/pkg/logger"
+	"github.com/raffops/chat_commons/pkg/uuid"
+	"go.uber.org/zap"
 )
 
 type service struct {

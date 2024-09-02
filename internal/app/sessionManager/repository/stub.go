@@ -4,7 +4,7 @@ package sessionManager
 //import (
 //	"context"
 //	"github.com/raffops/auth/internal/app/sessionManager"
-//	"github.com/raffops/chat/pkg/errs"
+//	"github.com/raffops/chat_commons/pkg/errs"
 //	"time"
 //)
 //

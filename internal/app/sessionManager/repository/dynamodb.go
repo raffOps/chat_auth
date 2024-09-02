@@ -10,8 +10,8 @@ package sessionManager
 //	"github.com/aws/aws-sdk-go/service/dynamodb"
 //	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 //	"github.com/raffops/auth/internal/app/sessionManager"
-//	"github.com/raffops/chat/pkg/encryptor"
-//	"github.com/raffops/chat/pkg/errs"
+//	"github.com/raffops/chat_commons/pkg/encryptor"
+//	"github.com/raffops/chat_commons/pkg/errs"
 //	"strconv"
 //	"time"
 //)

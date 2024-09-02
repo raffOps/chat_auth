@@ -5,11 +5,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/raffops/auth/internal/app/sessionManager"
-	"github.com/raffops/chat/pkg/encryptor"
-	"github.com/raffops/chat/pkg/errs"
-	"github.com/redis/go-redis/v9"
 	"time"
+
+	"github.com/raffops/chat_auth/internal/app/sessionManager"
+	"github.com/raffops/chat_commons/pkg/encryptor"
+	"github.com/raffops/chat_commons/pkg/errs"
+	"github.com/redis/go-redis/v9"
 )
 
 type redisRepository struct {

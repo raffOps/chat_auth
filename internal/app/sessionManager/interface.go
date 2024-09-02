@@ -2,11 +2,12 @@ package sessionManager
 
 import (
 	"context"
-	authModels "github.com/raffops/auth/internal/app/auth/model"
-	"github.com/raffops/chat/pkg/errs"
-	"google.golang.org/grpc"
 	"net/http"
 	"time"
+
+	authModels "github.com/raffops/chat_auth/internal/app/auth/model"
+	"github.com/raffops/chat_commons/pkg/errs"
+	"google.golang.org/grpc"
 )
 
 type ReaderRepository interface {

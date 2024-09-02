@@ -3,8 +3,9 @@ package user
 import (
 	"context"
 	"database/sql"
-	userModels "github.com/raffops/auth/internal/app/user/models"
-	"github.com/raffops/chat/pkg/errs"
+
+	userModels "github.com/raffops/chat_auth/internal/app/user/models"
+	"github.com/raffops/chat_commons/pkg/errs"
 )
 
 type ReaderRepository interface {

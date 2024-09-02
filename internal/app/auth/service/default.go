@@ -2,12 +2,13 @@ package auth
 
 import (
 	"context"
-	"github.com/raffops/auth/internal/app/auth"
-	authModels "github.com/raffops/auth/internal/app/auth/model"
-	"github.com/raffops/auth/internal/app/sessionManager"
-	"github.com/raffops/auth/internal/app/user"
-	userModels "github.com/raffops/auth/internal/app/user/models"
-	"github.com/raffops/chat/pkg/errs"
+
+	"github.com/raffops/chat_auth/internal/app/auth"
+	authModels "github.com/raffops/chat_auth/internal/app/auth/model"
+	"github.com/raffops/chat_auth/internal/app/sessionManager"
+	"github.com/raffops/chat_auth/internal/app/user"
+	userModels "github.com/raffops/chat_auth/internal/app/user/models"
+	"github.com/raffops/chat_commons/pkg/errs"
 )
 
 type defaultService struct {

@@ -6,17 +6,18 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/huandu/go-sqlbuilder"
-	"github.com/lib/pq"
-	authModel "github.com/raffops/auth/internal/app/auth/model"
-	"github.com/raffops/auth/internal/app/user"
-	userModel "github.com/raffops/auth/internal/app/user/models"
-	"github.com/raffops/chat/pkg/errs"
-	"github.com/raffops/chat/pkg/logger"
-	"go.uber.org/zap"
 	"regexp"
 	"slices"
 	"time"
+
+	"github.com/huandu/go-sqlbuilder"
+	"github.com/lib/pq"
+	authModel "github.com/raffops/chat_auth/internal/app/auth/model"
+	"github.com/raffops/chat_auth/internal/app/user"
+	userModel "github.com/raffops/chat_auth/internal/app/user/models"
+	"github.com/raffops/chat_commons/pkg/errs"
+	"github.com/raffops/chat_commons/pkg/logger"
+	"go.uber.org/zap"
 )
 
 type repository struct {

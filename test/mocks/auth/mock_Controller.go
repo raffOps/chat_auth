@@ -55,6 +55,40 @@ func (_c *Controller_Callback_Call) RunAndReturn(run func(http.ResponseWriter, *
 	return _c
 }
 
+// DeleteUser provides a mock function with given fields: w, r
+func (_m *Controller) DeleteUser(w http.ResponseWriter, r *http.Request) {
+	_m.Called(w, r)
+}
+
+// Controller_DeleteUser_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteUser'
+type Controller_DeleteUser_Call struct {
+	*mock.Call
+}
+
+// DeleteUser is a helper method to define mock.On call
+//   - w http.ResponseWriter
+//   - r *http.Request
+func (_e *Controller_Expecter) DeleteUser(w interface{}, r interface{}) *Controller_DeleteUser_Call {
+	return &Controller_DeleteUser_Call{Call: _e.mock.On("DeleteUser", w, r)}
+}
+
+func (_c *Controller_DeleteUser_Call) Run(run func(w http.ResponseWriter, r *http.Request)) *Controller_DeleteUser_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(http.ResponseWriter), args[1].(*http.Request))
+	})
+	return _c
+}
+
+func (_c *Controller_DeleteUser_Call) Return() *Controller_DeleteUser_Call {
+	_c.Call.Return()
+	return _c
+}
+
+func (_c *Controller_DeleteUser_Call) RunAndReturn(run func(http.ResponseWriter, *http.Request)) *Controller_DeleteUser_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Login provides a mock function with given fields: w, r
 func (_m *Controller) Login(w http.ResponseWriter, r *http.Request) {
 	_m.Called(w, r)
@@ -85,6 +119,74 @@ func (_c *Controller_Login_Call) Return() *Controller_Login_Call {
 }
 
 func (_c *Controller_Login_Call) RunAndReturn(run func(http.ResponseWriter, *http.Request)) *Controller_Login_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// Logout provides a mock function with given fields: w, r
+func (_m *Controller) Logout(w http.ResponseWriter, r *http.Request) {
+	_m.Called(w, r)
+}
+
+// Controller_Logout_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Logout'
+type Controller_Logout_Call struct {
+	*mock.Call
+}
+
+// Logout is a helper method to define mock.On call
+//   - w http.ResponseWriter
+//   - r *http.Request
+func (_e *Controller_Expecter) Logout(w interface{}, r interface{}) *Controller_Logout_Call {
+	return &Controller_Logout_Call{Call: _e.mock.On("Logout", w, r)}
+}
+
+func (_c *Controller_Logout_Call) Run(run func(w http.ResponseWriter, r *http.Request)) *Controller_Logout_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(http.ResponseWriter), args[1].(*http.Request))
+	})
+	return _c
+}
+
+func (_c *Controller_Logout_Call) Return() *Controller_Logout_Call {
+	_c.Call.Return()
+	return _c
+}
+
+func (_c *Controller_Logout_Call) RunAndReturn(run func(http.ResponseWriter, *http.Request)) *Controller_Logout_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// Refresh provides a mock function with given fields: w, r
+func (_m *Controller) Refresh(w http.ResponseWriter, r *http.Request) {
+	_m.Called(w, r)
+}
+
+// Controller_Refresh_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Refresh'
+type Controller_Refresh_Call struct {
+	*mock.Call
+}
+
+// Refresh is a helper method to define mock.On call
+//   - w http.ResponseWriter
+//   - r *http.Request
+func (_e *Controller_Expecter) Refresh(w interface{}, r interface{}) *Controller_Refresh_Call {
+	return &Controller_Refresh_Call{Call: _e.mock.On("Refresh", w, r)}
+}
+
+func (_c *Controller_Refresh_Call) Run(run func(w http.ResponseWriter, r *http.Request)) *Controller_Refresh_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(http.ResponseWriter), args[1].(*http.Request))
+	})
+	return _c
+}
+
+func (_c *Controller_Refresh_Call) Return() *Controller_Refresh_Call {
+	_c.Call.Return()
+	return _c
+}
+
+func (_c *Controller_Refresh_Call) RunAndReturn(run func(http.ResponseWriter, *http.Request)) *Controller_Refresh_Call {
 	_c.Call.Return(run)
 	return _c
 }

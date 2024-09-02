@@ -2,15 +2,16 @@ package service
 
 import (
 	"fmt"
-	"github.com/raffops/auth/internal/app/auth/model"
-	"github.com/raffops/chat/pkg/logger"
+	"slices"
+	"time"
+
+	auth "github.com/raffops/chat_auth/internal/app/auth/model"
+	"github.com/raffops/chat_commons/pkg/logger"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
-	"slices"
-	"time"
 )
 
 // wrappedStream wraps around the embedded grpc.ServerStream, and intercepts the RecvMsg and

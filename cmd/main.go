@@ -2,20 +2,21 @@ package main
 
 import (
 	"context"
-	"github.com/joho/godotenv"
-	authController "github.com/raffops/auth/internal/app/auth/controller"
-	authService "github.com/raffops/auth/internal/app/auth/service"
-	sessionRepository "github.com/raffops/auth/internal/app/sessionManager/repository"
-	sessionService "github.com/raffops/auth/internal/app/sessionManager/service"
-	user "github.com/raffops/auth/internal/app/user/repository"
-	"github.com/raffops/auth/internal/server"
-	"github.com/raffops/chat/pkg/database/postgres"
-	"github.com/raffops/chat/pkg/database/redis"
-	"github.com/raffops/chat/pkg/encryptor"
-	"github.com/raffops/chat/pkg/logger"
-	"go.uber.org/zap"
 	"os"
 	"time"
+
+	"github.com/joho/godotenv"
+	authController "github.com/raffops/chat_auth/internal/app/auth/controller"
+	authService "github.com/raffops/chat_auth/internal/app/auth/service"
+	sessionRepository "github.com/raffops/chat_auth/internal/app/sessionManager/repository"
+	sessionService "github.com/raffops/chat_auth/internal/app/sessionManager/service"
+	user "github.com/raffops/chat_auth/internal/app/user/repository"
+	"github.com/raffops/chat_auth/internal/server"
+	"github.com/raffops/chat_commons/pkg/database/postgres"
+	"github.com/raffops/chat_commons/pkg/database/redis"
+	"github.com/raffops/chat_commons/pkg/encryptor"
+	"github.com/raffops/chat_commons/pkg/logger"
+	"go.uber.org/zap"
 )
 
 func main() {

@@ -2,10 +2,11 @@ package auth
 
 import (
 	"context"
-	"github.com/raffops/auth/internal/app/auth/model"
-	"github.com/raffops/auth/internal/app/user/models"
-	"github.com/raffops/chat/pkg/errs"
 	"net/http"
+
+	auth "github.com/raffops/chat_auth/internal/app/auth/model"
+	user "github.com/raffops/chat_auth/internal/app/user/models"
+	"github.com/raffops/chat_commons/pkg/errs"
 )
 
 type Controller interface {

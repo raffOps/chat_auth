@@ -5,9 +5,9 @@ package sessionManager
 import (
 	context "context"
 
-	auth "github.com/raffops/auth/internal/app/auth/model"
+	auth "github.com/raffops/chat_auth/internal/app/auth/model"
 
-	errs "github.com/raffops/chat/pkg/errs"
+	errs "github.com/raffops/chat_commons/pkg/errs"
 
 	grpc "google.golang.org/grpc"
 
@@ -187,7 +187,7 @@ func (_c *Service_CreateSession_Call) RunAndReturn(run func(context.Context, str
 	return _c
 }
 
-// FinishSession provides a mock function with given fields: ctx, id
+// FinishSession provides a mock function with given fields: ctx, sessionId
 func (_m *Service) FinishSession(ctx context.Context, sessionId string) errs.ChatError {
 	ret := _m.Called(ctx, sessionId)
 
@@ -214,12 +214,12 @@ type Service_FinishSession_Call struct {
 
 // FinishSession is a helper method to define mock.On call
 //   - ctx context.Context
-//   - id string
-func (_e *Service_Expecter) FinishSession(ctx interface{}, id interface{}) *Service_FinishSession_Call {
-	return &Service_FinishSession_Call{Call: _e.mock.On("FinishSession", ctx, id)}
+//   - sessionId string
+func (_e *Service_Expecter) FinishSession(ctx interface{}, sessionId interface{}) *Service_FinishSession_Call {
+	return &Service_FinishSession_Call{Call: _e.mock.On("FinishSession", ctx, sessionId)}
 }
 
-func (_c *Service_FinishSession_Call) Run(run func(ctx context.Context, id string)) *Service_FinishSession_Call {
+func (_c *Service_FinishSession_Call) Run(run func(ctx context.Context, sessionId string)) *Service_FinishSession_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(context.Context), args[1].(string))
 	})
@@ -232,6 +232,55 @@ func (_c *Service_FinishSession_Call) Return(_a0 errs.ChatError) *Service_Finish
 }
 
 func (_c *Service_FinishSession_Call) RunAndReturn(run func(context.Context, string) errs.ChatError) *Service_FinishSession_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// FinishUserSessions provides a mock function with given fields: ctx, userId
+func (_m *Service) FinishUserSessions(ctx context.Context, userId string) errs.ChatError {
+	ret := _m.Called(ctx, userId)
+
+	if len(ret) == 0 {
+		panic("no return value specified for FinishUserSessions")
+	}
+
+	var r0 errs.ChatError
+	if rf, ok := ret.Get(0).(func(context.Context, string) errs.ChatError); ok {
+		r0 = rf(ctx, userId)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(errs.ChatError)
+		}
+	}
+
+	return r0
+}
+
+// Service_FinishUserSessions_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FinishUserSessions'
+type Service_FinishUserSessions_Call struct {
+	*mock.Call
+}
+
+// FinishUserSessions is a helper method to define mock.On call
+//   - ctx context.Context
+//   - userId string
+func (_e *Service_Expecter) FinishUserSessions(ctx interface{}, userId interface{}) *Service_FinishUserSessions_Call {
+	return &Service_FinishUserSessions_Call{Call: _e.mock.On("FinishUserSessions", ctx, userId)}
+}
+
+func (_c *Service_FinishUserSessions_Call) Run(run func(ctx context.Context, userId string)) *Service_FinishUserSessions_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *Service_FinishUserSessions_Call) Return(_a0 errs.ChatError) *Service_FinishUserSessions_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *Service_FinishUserSessions_Call) RunAndReturn(run func(context.Context, string) errs.ChatError) *Service_FinishUserSessions_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -293,6 +342,67 @@ func (_c *Service_GetRoles_Call) Return(_a0 []auth.RoleId, _a1 errs.ChatError) *
 }
 
 func (_c *Service_GetRoles_Call) RunAndReturn(run func(context.Context, string) ([]auth.RoleId, errs.ChatError)) *Service_GetRoles_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetSession provides a mock function with given fields: ctx, sessionId
+func (_m *Service) GetSession(ctx context.Context, sessionId string) (map[string]interface{}, errs.ChatError) {
+	ret := _m.Called(ctx, sessionId)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetSession")
+	}
+
+	var r0 map[string]interface{}
+	var r1 errs.ChatError
+	if rf, ok := ret.Get(0).(func(context.Context, string) (map[string]interface{}, errs.ChatError)); ok {
+		return rf(ctx, sessionId)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) map[string]interface{}); ok {
+		r0 = rf(ctx, sessionId)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(map[string]interface{})
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) errs.ChatError); ok {
+		r1 = rf(ctx, sessionId)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(errs.ChatError)
+		}
+	}
+
+	return r0, r1
+}
+
+// Service_GetSession_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetSession'
+type Service_GetSession_Call struct {
+	*mock.Call
+}
+
+// GetSession is a helper method to define mock.On call
+//   - ctx context.Context
+//   - sessionId string
+func (_e *Service_Expecter) GetSession(ctx interface{}, sessionId interface{}) *Service_GetSession_Call {
+	return &Service_GetSession_Call{Call: _e.mock.On("GetSession", ctx, sessionId)}
+}
+
+func (_c *Service_GetSession_Call) Run(run func(ctx context.Context, sessionId string)) *Service_GetSession_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *Service_GetSession_Call) Return(_a0 map[string]interface{}, _a1 errs.ChatError) *Service_GetSession_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *Service_GetSession_Call) RunAndReturn(run func(context.Context, string) (map[string]interface{}, errs.ChatError)) *Service_GetSession_Call {
 	_c.Call.Return(run)
 	return _c
 }

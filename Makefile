@@ -68,8 +68,7 @@ migration-%:
 	@migrate create -ext sql -dir ./internal/app/user/repository/migrations $*
 
 migrate:
-	migrate -path ./internal/app/user/repository/migrations
- -database "postgres://${DB_USERNAME}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_DATABASE}?sslmode=disable" up
+	migrate -path ./internal/app/user/repository/migrations -database "postgres://${DB_USERNAME}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_DATABASE}?sslmode=disable" up
 
 mock:
 	rm -rf internal/mocks/*
