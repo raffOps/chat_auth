@@ -10,14 +10,47 @@ import (
 	"github.com/raffops/chat/pkg/uuid"
 	"go.uber.org/zap"
 	"os"
+	"strings"
 	"time"
 )
 
 type service struct {
-	repo              sessionManager.Repository
+	repo              sessionManager.ReaderWriterRepository
 	timeout           time.Duration
 	secret            string
 	mapMethodsToRoles map[string][]authModels.RoleId
+}
+
+func (s service) FinishUserSessions(ctx context.Context, userId string) errs.ChatError {
+	pattern := fmt.Sprintf("user_session:%s:*", userId)
+	userSessions, err := s.repo.GetKeys(ctx, pattern)
+	if err != nil {
+		return err
+	}
+
+	sessionRepoTx, err := s.repo.BeginTransaction(ctx)
+	if err != nil {
+		return err
+	}
+	defer s.repo.RollbackTransaction(ctx, sessionRepoTx)
+
+	prefix := "user_session:" + userId + ":"
+	for _, userSession := range userSessions {
+		session, _ := strings.CutPrefix(userSession, prefix)
+		err = s.repo.Delete(ctx, sessionRepoTx, "session", session)
+		if err != nil {
+			return err
+		}
+		err = s.repo.Delete(ctx, sessionRepoTx, "user_session", userId+":"+session)
+		if err != nil {
+			return err
+		}
+	}
+	return s.repo.CommitTransaction(ctx, sessionRepoTx)
+}
+
+func (s service) GetSession(ctx context.Context, sessionId string) (map[string]interface{}, errs.ChatError) {
+	return s.repo.HashGetEncrypted(ctx, "session", sessionId, s.secret)
 }
 
 func (s service) SetRoles(method string, roles []authModels.RoleId) {
@@ -44,66 +77,100 @@ func sanityCheck() {
 }
 
 func (s service) RefreshSession(ctx context.Context, sessionId string) errs.ChatError {
-	sessionValues, err := s.repo.GetEncryptedHashmap(ctx, sessionId, s.secret)
+	tx, err := s.repo.BeginTransaction(ctx)
+	if err != nil {
+		return err
+	}
+	defer s.repo.RollbackTransaction(ctx, tx)
+
+	sessionValues, err := s.repo.HashGetEncrypted(ctx, "session", sessionId, s.secret)
 	if err != nil {
 		return err
 	}
 
-	userId, ok := sessionValues["userId"].(string)
+	_, ok := sessionValues["user_id"].(string)
 	if !ok {
-		return errs.NewError(errs.ErrInternal, fmt.Errorf("userId not found"))
+		return errs.NewError(errs.ErrInternal, fmt.Errorf("user_id not found"))
 	}
 
 	timeoutAt := time.Now().Add(s.timeout)
-	err = s.repo.ExpireAt(ctx, "session:"+sessionId, timeoutAt)
+	err = s.repo.ExpireAt(ctx, tx, "session", sessionId, timeoutAt)
 	if err != nil {
 		return err
 	}
 
-	err = s.repo.Hashset(
-		ctx,
-		fmt.Sprintf("user:%s", userId),
-		map[string]interface{}{
-			"session:" + sessionId: timeoutAt.Unix(),
-		},
-	)
-	return err
+	return s.repo.CommitTransaction(ctx, tx)
 }
 
 func (s service) CreateSession(
 	ctx context.Context,
-	id string,
+	userId string,
 	payload map[string]interface{},
 ) (string, errs.ChatError) {
+	payload["user_id"] = userId
 	sessionId := generateRandomSessionId()
+
+	tx, err := s.repo.BeginTransaction(ctx)
+	if tx == nil {
+		return sessionId, errs.NewError(errs.ErrInternal, fmt.Errorf("transaction is nil"))
+	}
+
+	if err != nil {
+		return sessionId, err
+	}
+
+	defer s.repo.RollbackTransaction(ctx, tx)
+
+	err = s.repo.HashSetEncrypted(ctx, tx, "session", sessionId, s.secret, payload)
+	if err != nil {
+		return sessionId, err
+	}
+	err = s.repo.StringSet(ctx, tx, fmt.Sprintf("user_session:%s", userId), sessionId, "")
+	if err != nil {
+		return sessionId, err
+	}
+	// TODO maybe async?
 	timeoutAt := time.Now().Add(s.timeout)
-	err := s.repo.SetEncryptedHashmap(ctx, "session:"+sessionId, s.secret, payload)
+	err = s.repo.ExpireAt(ctx, tx, "session", sessionId, timeoutAt)
+	if err != nil {
+		return sessionId, err
+	}
+	err = s.repo.ExpireAt(ctx, tx, fmt.Sprintf("user_session:%s", userId), sessionId, timeoutAt)
 	if err != nil {
 		return sessionId, err
 	}
 
-	err = s.repo.ExpireAt(ctx, sessionId, timeoutAt)
-	if err != nil {
-		return sessionId, err
-	}
-
-	err = s.repo.Hashset(
-		ctx,
-		fmt.Sprintf("user:%s", id),
-		map[string]interface{}{
-			"session:" + sessionId: timeoutAt.Unix(),
-		},
-	)
-
+	err = s.repo.CommitTransaction(ctx, tx)
 	return sessionId, err
 }
 
-func (s service) FinishSession(ctx context.Context, id string) errs.ChatError {
-	//TODO implement me
-	panic("implement me")
+func (s service) FinishSession(ctx context.Context, sessionId string) errs.ChatError {
+
+	session, err := s.repo.HashGetEncrypted(ctx, "session", sessionId, s.secret)
+	if err != nil {
+		return err
+	}
+	userId := session["user_id"].(string)
+
+	tx, err := s.repo.BeginTransaction(ctx)
+	if err != nil {
+		return err
+	}
+	defer s.repo.RollbackTransaction(ctx, tx)
+
+	err = s.repo.Delete(ctx, tx, "session", sessionId)
+	if err != nil {
+		return err
+	}
+	err = s.repo.Delete(ctx, tx, fmt.Sprintf("user_session:%s", userId), sessionId)
+	if err != nil {
+		return err
+	}
+
+	return s.repo.CommitTransaction(ctx, tx)
 }
 
-func NewDefaultService(repo sessionManager.Repository, timeout time.Duration, secret string) sessionManager.Service {
+func NewDefaultService(repo sessionManager.ReaderWriterRepository, timeout time.Duration, secret string) sessionManager.Service {
 	sanityCheck()
 	return &service{
 		repo:              repo,
@@ -114,5 +181,5 @@ func NewDefaultService(repo sessionManager.Repository, timeout time.Duration, se
 }
 
 func generateRandomSessionId() string {
-	return fmt.Sprintf("%s", uuid.GenerateUUID())
+	return uuid.GenerateUUID()
 }

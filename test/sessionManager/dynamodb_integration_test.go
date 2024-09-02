@@ -1,76 +1,71 @@
-package service
+package sessionManager
 
 import (
 	"context"
 	"encoding/json"
+	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/gorilla/mux"
 	authModels "github.com/raffops/auth/internal/app/auth/model"
 	"github.com/raffops/auth/internal/app/sessionManager"
-	sessionRepository "github.com/raffops/auth/internal/app/sessionManager/repository"
+	"github.com/raffops/auth/internal/app/sessionManager/service"
 	userModels "github.com/raffops/auth/internal/app/user/models"
-	grpcMock "github.com/raffops/auth/internal/mocks/grpc"
-	databaseRedis "github.com/raffops/chat/pkg/database/redis"
+	grpcMock "github.com/raffops/auth/test/mocks/grpc"
+	databaseDynamo "github.com/raffops/chat/pkg/database/dynamodb"
 	"github.com/raffops/chat/pkg/encryptor"
-	"github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/suite"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
-	"log"
 	"net/http"
 	"net/http/httptest"
 	"os"
-	"strconv"
 	"testing"
 	"time"
 )
 
-type SessionManagerTestSuite struct {
+type SessionManagerDynamodbTestSuite struct {
 	suite.Suite
 	ctx                context.Context
 	secret             string
-	redisCon           *redis.Client
+	dynamoConn         *dynamodb.DynamoDB
 	defaultEncryptor   encryptor.Encryptor
-	sessionRepo        sessionManager.Repository
+	sessionRepo        sessionManager.ReaderWriterRepository
 	sessionSrv         sessionManager.Service
 	johnUser           userModels.User
 	johnFirstSession   string
 	johnSecondSession  string
-	johnSessionTimeout time.Duration
+	johnSessionTimeout time.Time
 }
 
-func (s *SessionManagerTestSuite) TestSetupSuite() {
+func (s *SessionManagerDynamodbTestSuite) TestSetupSuite() {
 	s.ctx = context.Background()
-	redisContainer, err := databaseRedis.GetRedisTestContainer(s.ctx)
+	dynamoDbTestContainer, err := databaseDynamo.GetDynamoDbTestContainer(s.ctx)
 	if err != nil {
-		log.Fatalf("cannot start redis container: %v", err)
+		s.T().Fatalf("cannot start dynamodb container: %v", err)
 	}
 	defer func() {
-		err := redisContainer.Terminate(s.ctx)
+		err := dynamoDbTestContainer.Terminate(s.ctx)
 		if err != nil {
-			log.Printf("cannot stop redis container: %v", err)
+			s.T().Fatalf("cannot stop dynamodb container: %v", err)
 		}
 	}()
-	port, _ := redisContainer.MappedPort(s.ctx, "6379")
-	os.Setenv("REDIS_PORT", port.Port())
+	port, _ := dynamoDbTestContainer.MappedPort(s.ctx, "4566")
+	os.Setenv("LOCALSTACK_PORT", port.Port())
+	s.T().Logf("dynamodb container started on port %s", port.Port())
 
-	log.Printf("redis container started on port %s", port.Port())
-
-	s.redisCon = databaseRedis.GetRedisConn(s.ctx)
-	defer func() {
-		err := s.redisCon.Close()
-		if err != nil {
-			log.Printf("cannot close redis connection: %v", err)
-		}
-	}()
+	s.dynamoConn = databaseDynamo.GetDynamodbConn(s.ctx)
+	defer databaseDynamo.Close(s.dynamoConn)
 
 	s.defaultEncryptor = encryptor.NewDefaultEncryptor()
-	s.sessionRepo = sessionRepository.NewRedisRepository(s.redisCon, s.defaultEncryptor)
+	//s.sessionRepo, err = sessionRepository.NewDynamodbRepository(s.dynamoConn, s.defaultEncryptor)
+	if err != nil {
+		s.T().Fatalf("NewDynamodbRepository() error = %v", err)
+	}
 
 	timeout, _ := time.ParseDuration(os.Getenv("SESSION_TIMEOUT"))
 	s.secret = os.Getenv("SESSION_MANAGER_SECRET")
-	s.sessionSrv = NewDefaultService(s.sessionRepo, timeout, s.secret)
+	s.sessionSrv = service.NewDefaultService(s.sessionRepo, timeout, s.secret)
 
 	s.johnUser = userModels.User{
 		Id:       "1",
@@ -149,14 +144,15 @@ func (s *SessionManagerTestSuite) TestSetupSuite() {
 	}
 }
 
-func (s *SessionManagerTestSuite) createJohnFirstSession() {
+func (s *SessionManagerDynamodbTestSuite) createJohnFirstSession() {
 	id := s.johnUser.Id
 	payload := map[string]interface{}{
 		"auth_type": int(s.johnUser.AuthType),
 		"role":      int(s.johnUser.Role),
 		"status":    int(s.johnUser.Status),
+		"user_id":   id,
 	}
-	payloadString, _ := json.Marshal(payload)
+
 	got, err := s.sessionSrv.CreateSession(s.ctx, id, payload)
 	if got == "" {
 		s.T().Fatalf("CreateSession() got = %v, want not empty", got)
@@ -165,28 +161,28 @@ func (s *SessionManagerTestSuite) createJohnFirstSession() {
 		s.T().Fatalf("CreateSession() error = %v", err)
 	}
 
-	encryptedSession, errEncrypted := s.redisCon.Get(s.ctx, "session:"+got).Result()
+	result, errEncrypted := s.sessionRepo.HashGet(s.ctx, "session", got, "encrypted_value")
+	if errEncrypted != nil {
+		s.T().Fatalf("CreateSession() error = %v", errEncrypted)
+	}
+
+	payloadString, _ := json.Marshal(payload)
 	payloadEncrypted, _ := s.defaultEncryptor.Encrypt(string(payloadString), s.secret)
-	if errEncrypted != nil || encryptedSession != payloadEncrypted {
+	encryptedSession := result["encrypted_value"].(string)
+	if encryptedSession != payloadEncrypted {
 		s.T().Fatalf("CreateSession() got = %v, want %v", encryptedSession, payloadEncrypted)
 	}
 
-	userSession, _ := s.redisCon.HGetAll(s.ctx, "user:"+id).Result()
-	if len(userSession) != 1 {
-		s.T().Fatalf("CreateSession() got = %v, want 1", len(userSession))
-	}
-	if userSession["session:"+got] == "" {
-		s.T().Fatalf("CreateSession() got = %v, want not empty", userSession[got])
-	}
 	s.johnFirstSession = got
 }
 
-func (s *SessionManagerTestSuite) createJohnSecondSession() {
+func (s *SessionManagerDynamodbTestSuite) createJohnSecondSession() {
 	id := s.johnUser.Id
 	payload := map[string]interface{}{
 		"auth_type": int(s.johnUser.AuthType),
 		"role":      int(s.johnUser.Role),
 		"status":    int(s.johnUser.Status),
+		"user_id":   id,
 	}
 	payloadString, _ := json.Marshal(payload)
 	got, err := s.sessionSrv.CreateSession(s.ctx, id, payload)
@@ -197,24 +193,21 @@ func (s *SessionManagerTestSuite) createJohnSecondSession() {
 		s.T().Fatalf("CreateSession() error = %v", err)
 	}
 
-	encryptedSession, errEncrypted := s.redisCon.Get(s.ctx, "session:"+got).Result()
-	payloadEncrypted, _ := s.defaultEncryptor.Encrypt(string(payloadString), s.secret)
-	if errEncrypted != nil || encryptedSession != payloadEncrypted {
-		s.T().Fatalf("CreateSession() got = %v, want %v", encryptedSession, payloadEncrypted)
+	result, errEncrypted := s.sessionRepo.HashGet(s.ctx, "session", got, "encrypted_value")
+	if errEncrypted != nil {
+		s.T().Fatalf("CreateSession() error = %v", errEncrypted)
 	}
 
-	userSession, _ := s.redisCon.HGetAll(s.ctx, "user:"+id).Result()
-	if len(userSession) != 2 {
-		s.T().Fatalf("CreateSession() got = %v, want 1", len(userSession))
-	}
-	if userSession["session:"+got] == "" {
-		s.T().Fatalf("CreateSession() got = %v, want not empty", userSession[got])
+	encryptedSession := result["encrypted_value"].(string)
+	payloadEncrypted, _ := s.defaultEncryptor.Encrypt(string(payloadString), s.secret)
+	if encryptedSession != payloadEncrypted {
+		s.T().Fatalf("CreateSession() got = %v, want %v", encryptedSession, payloadEncrypted)
 	}
 
 	s.johnSecondSession = got
 }
 
-func (s *SessionManagerTestSuite) checkInvalidSessionId() {
+func (s *SessionManagerDynamodbTestSuite) checkInvalidSessionId() {
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest("GET", "/", nil)
 	r.Header.Set("Authorization", "invalid")
@@ -235,7 +228,7 @@ func (s *SessionManagerTestSuite) checkInvalidSessionId() {
 	}
 }
 
-func (s *SessionManagerTestSuite) checkJohnFirstSession() {
+func (s *SessionManagerDynamodbTestSuite) checkJohnFirstSession() {
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest("GET", "/", nil)
 	r.Header.Set("Authorization", "Bearer "+s.johnFirstSession)
@@ -256,7 +249,7 @@ func (s *SessionManagerTestSuite) checkJohnFirstSession() {
 	}
 }
 
-func (s *SessionManagerTestSuite) checkJohnFirstSessionWithAdminRole() {
+func (s *SessionManagerDynamodbTestSuite) checkJohnFirstSessionWithAdminRole() {
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest("GET", "/", nil)
 	r.Header.Set("Authorization", "Bearer "+s.johnFirstSession)
@@ -277,7 +270,7 @@ func (s *SessionManagerTestSuite) checkJohnFirstSessionWithAdminRole() {
 	}
 }
 
-func (s *SessionManagerTestSuite) checkJohnFirstSessionWithExpiredTTL() {
+func (s *SessionManagerDynamodbTestSuite) checkJohnFirstSessionWithExpiredTTL() {
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest("GET", "/", nil)
 	r.Header.Set("Authorization", "Bearer "+s.johnFirstSession)
@@ -287,7 +280,7 @@ func (s *SessionManagerTestSuite) checkJohnFirstSessionWithExpiredTTL() {
 	}
 	router := mux.NewRouter()
 	router.HandleFunc("/", s.sessionSrv.CheckRestSession(f, []authModels.RoleId{authModels.RoleUser}))
-	time.Sleep(time.Until(time.Unix(int64(s.johnSessionTimeout.Seconds()+1), 0)))
+	time.Sleep(time.Until(s.johnSessionTimeout))
 
 	router.ServeHTTP(w, r)
 
@@ -300,49 +293,23 @@ func (s *SessionManagerTestSuite) checkJohnFirstSessionWithExpiredTTL() {
 	}
 }
 
-func (s *SessionManagerTestSuite) refreshJohnFirstSession() {
-	firstTimeout, _ := s.redisCon.ExpireTime(s.ctx, s.johnFirstSession).Result()
-	firstTimeoutOnUserSessions, _ := s.redisCon.HGet(
-		s.ctx,
-		"user:"+s.johnUser.Id,
-		"session:"+s.johnFirstSession,
-	).Result()
-	firstTimeoutOnUserSessionsInt, _ := strconv.Atoi(firstTimeoutOnUserSessions)
+func (s *SessionManagerDynamodbTestSuite) refreshJohnFirstSession() {
+	firstTimeout, _ := s.sessionRepo.GetTTL(s.ctx, "session", s.johnFirstSession)
 
 	time.Sleep(time.Duration(1) * time.Second)
 	errRefresh := s.sessionSrv.RefreshSession(s.ctx, s.johnFirstSession)
 	if errRefresh != nil {
 		s.T().Fatalf("RefreshSession() error = %v", errRefresh)
 	}
-	secondTimeout, err := s.redisCon.ExpireTime(s.ctx, "session:"+s.johnFirstSession).Result()
-	if err != nil || firstTimeout >= secondTimeout {
+	secondTimeout, err := s.sessionRepo.GetTTL(s.ctx, "session", s.johnFirstSession)
+	if err != nil || firstTimeout.Unix() >= secondTimeout.Unix() {
 		s.T().Fatalf("RefreshSession() got = %v, want greater than %v", secondTimeout, firstTimeout)
 	}
 
-	secondTimeoutOnUserSessions, _ := s.redisCon.HGet(
-		s.ctx,
-		"user:"+s.johnUser.Id,
-		"session:"+s.johnFirstSession,
-	).Result()
-	secondTimeoutOnUserSessionsInt, _ := strconv.Atoi(secondTimeoutOnUserSessions)
-	if firstTimeoutOnUserSessionsInt >= secondTimeoutOnUserSessionsInt {
-		s.T().Fatalf(
-			"RefreshSession() got = %v, want greater than %v",
-			secondTimeoutOnUserSessionsInt,
-			firstTimeoutOnUserSessionsInt,
-		)
-	}
-	if float64(secondTimeoutOnUserSessionsInt) != secondTimeout.Seconds() {
-		s.T().Fatalf(
-			"RefreshSession() got = %v, want %v",
-			secondTimeoutOnUserSessionsInt,
-			secondTimeout,
-		)
-	}
 	s.johnSessionTimeout = secondTimeout
 }
 
-func (s *SessionManagerTestSuite) CheckRestSession() {
+func (s *SessionManagerDynamodbTestSuite) CheckRestSession() {
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest("GET", "/", nil)
 	r.Header.Set("Authorization", "Bearer "+s.johnFirstSession)
@@ -358,7 +325,7 @@ func (s *SessionManagerTestSuite) CheckRestSession() {
 	}
 }
 
-func (s *SessionManagerTestSuite) UseJohnFirstSessionAfterTimeout() {
+func (s *SessionManagerDynamodbTestSuite) UseJohnFirstSessionAfterTimeout() {
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest("GET", "/", nil)
 	r.Header.Set("Authorization", "Bearer "+s.johnFirstSession)
@@ -374,8 +341,11 @@ func (s *SessionManagerTestSuite) UseJohnFirstSessionAfterTimeout() {
 	}
 }
 
-func (s *SessionManagerTestSuite) checkCorruptedSession() {
-	s.redisCon.Set(s.ctx, "session:"+s.johnSecondSession, "corrupted", 0)
+func (s *SessionManagerDynamodbTestSuite) checkCorruptedSession() {
+	errSet := s.sessionRepo.HashSet(s.ctx, nil, "session", s.johnSecondSession, map[string]interface{}{"encrypted_value": "corrupted"})
+	if errSet != nil {
+		s.T().Fatalf("Set() error = %v", errSet)
+	}
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest("GET", "/", nil)
 	r.Header.Set("Authorization", "Bearer "+s.johnSecondSession)
@@ -391,7 +361,7 @@ func (s *SessionManagerTestSuite) checkCorruptedSession() {
 	}
 }
 
-func (s *SessionManagerTestSuite) CheckGrpcSessionMissingToken() {
+func (s *SessionManagerDynamodbTestSuite) CheckGrpcSessionMissingToken() {
 	md := metadata.New(map[string]string{})
 	ctx := metadata.NewIncomingContext(context.Background(), md)
 	ss := &grpcMock.ServerStream{}
@@ -406,7 +376,7 @@ func (s *SessionManagerTestSuite) CheckGrpcSessionMissingToken() {
 	s.Equal("rpc error: code = PermissionDenied desc = missing token", err.Error())
 }
 
-func (s *SessionManagerTestSuite) CheckGrpcSessionInvalidToken() {
+func (s *SessionManagerDynamodbTestSuite) CheckGrpcSessionInvalidToken() {
 	md := metadata.New(map[string]string{
 		"authorization": "invalid",
 	})
@@ -423,7 +393,7 @@ func (s *SessionManagerTestSuite) CheckGrpcSessionInvalidToken() {
 	s.Equal("rpc error: code = PermissionDenied desc = invalid token", err.Error())
 }
 
-func (s *SessionManagerTestSuite) CheckGrpcSessionValidToken() {
+func (s *SessionManagerDynamodbTestSuite) CheckGrpcSessionValidToken() {
 	md := metadata.New(map[string]string{
 		"authorization": s.johnFirstSession,
 	})
@@ -441,7 +411,7 @@ func (s *SessionManagerTestSuite) CheckGrpcSessionValidToken() {
 	s.Equal(nil, err)
 }
 
-func (s *SessionManagerTestSuite) CheckGrpcSessionValidTokenButInvalidRole() {
+func (s *SessionManagerDynamodbTestSuite) CheckGrpcSessionValidTokenButInvalidRole() {
 	md := metadata.New(map[string]string{
 		"authorization": s.johnFirstSession,
 	})
@@ -460,16 +430,8 @@ func (s *SessionManagerTestSuite) CheckGrpcSessionValidTokenButInvalidRole() {
 	s.Equal("rpc error: code = PermissionDenied desc = invalid role", err.Error())
 }
 
-func TestSessionManager(t *testing.T) {
-	os.Setenv("REDIS_HOST", "127.0.0.1")
-	os.Setenv("REDIS_PASSWORD", "")
-	os.Setenv("REDIS_PORT", "6379")
+func TestSessionManagerDynamo(t *testing.T) {
 	os.Setenv("SESSION_MANAGER_SECRET", "7CIuQStxETYG3x0qVO7TcZF7vUNnKlMz")
-	os.Setenv("SESSION_TIMEOUT", "3s")
-	suite.Run(t, new(SessionManagerTestSuite))
-}
-
-func HelloWorldUser(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Hello user"))
+	os.Setenv("SESSION_TIMEOUT", "6s")
+	suite.Run(t, new(SessionManagerDynamodbTestSuite))
 }

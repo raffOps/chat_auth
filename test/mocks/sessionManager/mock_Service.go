@@ -127,9 +127,9 @@ func (_c *Service_CheckRestSession_Call) RunAndReturn(run func(http.HandlerFunc,
 	return _c
 }
 
-// CreateSession provides a mock function with given fields: ctx, id, payload
-func (_m *Service) CreateSession(ctx context.Context, id string, payload map[string]interface{}) (string, errs.ChatError) {
-	ret := _m.Called(ctx, id, payload)
+// CreateSession provides a mock function with given fields: ctx, userId, payload
+func (_m *Service) CreateSession(ctx context.Context, userId string, payload map[string]interface{}) (string, errs.ChatError) {
+	ret := _m.Called(ctx, userId, payload)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CreateSession")
@@ -138,16 +138,16 @@ func (_m *Service) CreateSession(ctx context.Context, id string, payload map[str
 	var r0 string
 	var r1 errs.ChatError
 	if rf, ok := ret.Get(0).(func(context.Context, string, map[string]interface{}) (string, errs.ChatError)); ok {
-		return rf(ctx, id, payload)
+		return rf(ctx, userId, payload)
 	}
 	if rf, ok := ret.Get(0).(func(context.Context, string, map[string]interface{}) string); ok {
-		r0 = rf(ctx, id, payload)
+		r0 = rf(ctx, userId, payload)
 	} else {
 		r0 = ret.Get(0).(string)
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, string, map[string]interface{}) errs.ChatError); ok {
-		r1 = rf(ctx, id, payload)
+		r1 = rf(ctx, userId, payload)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errs.ChatError)
@@ -164,13 +164,13 @@ type Service_CreateSession_Call struct {
 
 // CreateSession is a helper method to define mock.On call
 //   - ctx context.Context
-//   - id string
+//   - userId string
 //   - payload map[string]interface{}
-func (_e *Service_Expecter) CreateSession(ctx interface{}, id interface{}, payload interface{}) *Service_CreateSession_Call {
-	return &Service_CreateSession_Call{Call: _e.mock.On("CreateSession", ctx, id, payload)}
+func (_e *Service_Expecter) CreateSession(ctx interface{}, userId interface{}, payload interface{}) *Service_CreateSession_Call {
+	return &Service_CreateSession_Call{Call: _e.mock.On("CreateSession", ctx, userId, payload)}
 }
 
-func (_c *Service_CreateSession_Call) Run(run func(ctx context.Context, id string, payload map[string]interface{})) *Service_CreateSession_Call {
+func (_c *Service_CreateSession_Call) Run(run func(ctx context.Context, userId string, payload map[string]interface{})) *Service_CreateSession_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(context.Context), args[1].(string), args[2].(map[string]interface{}))
 	})
@@ -188,8 +188,8 @@ func (_c *Service_CreateSession_Call) RunAndReturn(run func(context.Context, str
 }
 
 // FinishSession provides a mock function with given fields: ctx, id
-func (_m *Service) FinishSession(ctx context.Context, id string) errs.ChatError {
-	ret := _m.Called(ctx, id)
+func (_m *Service) FinishSession(ctx context.Context, sessionId string) errs.ChatError {
+	ret := _m.Called(ctx, sessionId)
 
 	if len(ret) == 0 {
 		panic("no return value specified for FinishSession")
@@ -197,7 +197,7 @@ func (_m *Service) FinishSession(ctx context.Context, id string) errs.ChatError 
 
 	var r0 errs.ChatError
 	if rf, ok := ret.Get(0).(func(context.Context, string) errs.ChatError); ok {
-		r0 = rf(ctx, id)
+		r0 = rf(ctx, sessionId)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(errs.ChatError)

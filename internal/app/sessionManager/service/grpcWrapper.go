@@ -54,11 +54,7 @@ func (s service) CheckGrpcSession(
 	if len(token) == 0 {
 		return status.Errorf(codes.PermissionDenied, "missing token")
 	}
-	result, err := s.repo.GetEncryptedHashmap(
-		ss.Context(),
-		"session:"+token[0],
-		s.secret,
-	)
+	result, err := s.repo.HashGetEncrypted(ss.Context(), "session", token[0], s.secret)
 	if err != nil {
 		return status.Errorf(codes.PermissionDenied, "invalid token")
 	}

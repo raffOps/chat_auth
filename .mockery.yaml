@@ -1,4 +1,4 @@
-dir: "internal/mocks/{{.PackageName}}"
+dir: "test/mocks/{{.PackageName}}"
 mockname: "{{.InterfaceName}}"
 outpkg: "{{.PackageName}}"
 with-expecter: true

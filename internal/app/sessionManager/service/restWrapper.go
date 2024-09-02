@@ -14,7 +14,7 @@ func (s service) CheckRestSession(next http.HandlerFunc, roles []auth.RoleId) ht
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
-		result, err := s.repo.GetEncryptedHashmap(r.Context(), "session:"+token, s.secret)
+		result, err := s.repo.HashGetEncrypted(r.Context(), "session", token, s.secret)
 		for _, role := range roles {
 			if err == nil && float64(role) == result["role"].(float64) {
 				next(w, r)

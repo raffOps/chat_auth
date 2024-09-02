@@ -7,7 +7,7 @@ import (
 )
 
 func GetMigrations() ([]string, error) {
-	migrationsPath := filepath.Join("migrations")
+	migrationsPath := filepath.Join("internal", "app", "user", "repository", "migrations")
 	migrations, err := os.ReadDir(migrationsPath)
 	if err != nil {
 		return nil, err

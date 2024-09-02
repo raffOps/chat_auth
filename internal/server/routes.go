@@ -25,6 +25,8 @@ func (s *Server) RegisterRoutes(authController auth.Controller, sessionMgr sessi
 	r.HandleFunc("/login/{provider}", authController.Login)
 	r.HandleFunc("/login/{provider}/callback", authController.Callback)
 	r.HandleFunc("/signUp", authController.SignUp)
+	r.HandleFunc("/refresh", authController.Refresh)
+	r.HandleFunc("/user/{username}", authController.DeleteUser).Methods("DELETE")
 	return r
 }
 

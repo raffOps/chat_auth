@@ -36,17 +36,19 @@ func main() {
 	}
 
 	defaultEncryptor := encryptor.NewDefaultEncryptor()
+
 	sessionRepo := sessionRepository.NewRedisRepository(redis.GetRedisConn(ctx), defaultEncryptor)
 	sessionSrv := sessionService.NewDefaultService(
 		sessionRepo,
 		sessionTimeout,
 		os.Getenv("SESSION_MANAGER_SECRET"),
 	)
-	service := authService.NewDefaultService(userRepo, sessionSrv)
-	controller := authController.NewController(userRepo, service)
+	authSrv := authService.NewDefaultService(userRepo, sessionRepo, sessionSrv)
+	controller := authController.NewController(userRepo, sessionSrv, authSrv)
 
 	s := server.NewServer(controller, sessionSrv)
 
+	logger.Info("server started")
 	err = s.ListenAndServe()
 	if err != nil {
 		logger.Fatal("cannot start server", zap.Error(err))

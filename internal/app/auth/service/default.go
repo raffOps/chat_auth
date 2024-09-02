@@ -2,7 +2,6 @@ package auth
 
 import (
 	"context"
-	"fmt"
 	"github.com/raffops/auth/internal/app/auth"
 	authModels "github.com/raffops/auth/internal/app/auth/model"
 	"github.com/raffops/auth/internal/app/sessionManager"
@@ -12,8 +11,22 @@ import (
 )
 
 type defaultService struct {
-	userRepo   user.ReaderWriterRepository
-	sessionSrv sessionManager.Service
+	userRepo    user.ReaderWriterRepository
+	sessionRepo sessionManager.ReaderRepository
+	sessionSrv  sessionManager.Service
+}
+
+func (s defaultService) DeleteUser(ctx context.Context, userToDelete userModels.User) errs.ChatError {
+	err := s.sessionSrv.FinishUserSessions(ctx, userToDelete.Id)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s defaultService) Logout(ctx context.Context, sessionId string) errs.ChatError {
+	return s.sessionSrv.FinishSession(ctx, sessionId)
 }
 
 func (s defaultService) SignUp(
@@ -39,8 +52,8 @@ func (s defaultService) SignUp(
 
 	sessionId, err := s.sessionSrv.CreateSession(
 		ctx,
-		fmt.Sprintf("user:%s", createUser.Id),
-		map[string]interface{}{"userId": createUser.Id,
+		createUser.Id,
+		map[string]interface{}{
 			"role":      createUser.Role,
 			"status":    createUser.Status,
 			"auth_type": createUser.AuthType},
@@ -72,16 +85,18 @@ func (s defaultService) Login(ctx context.Context, username, email string) (stri
 	)
 }
 
-func (s defaultService) Refresh(ctx context.Context, token string) errs.ChatError {
-	s.sessionSrv.RefreshSession(ctx, token)
+func (s defaultService) Refresh(ctx context.Context, sessionId string) errs.ChatError {
+	return s.sessionSrv.RefreshSession(ctx, sessionId)
 }
 
 func NewDefaultService(
 	userRepo user.ReaderWriterRepository,
+	sessionRepo sessionManager.ReaderRepository,
 	sessionSrv sessionManager.Service,
 ) auth.Service {
 	return &defaultService{
-		userRepo:   userRepo,
-		sessionSrv: sessionSrv,
+		userRepo:    userRepo,
+		sessionRepo: sessionRepo,
+		sessionSrv:  sessionSrv,
 	}
 }

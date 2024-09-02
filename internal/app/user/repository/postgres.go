@@ -19,16 +19,16 @@ import (
 	"time"
 )
 
-type PostgresRepository struct {
+type repository struct {
 	db *sql.DB
 }
 
-func (p PostgresRepository) GetDB() *sql.DB {
+func (p repository) GetDB() *sql.DB {
 	return p.db
 }
 
 // fetchUser is a helper method to create a 'model.User' object
-func (p PostgresRepository) fetchUser(
+func parseUser(
 	id, username, email, loginHistory sql.NullString,
 	role, status, authType sql.NullInt16,
 	createdAt, updatedAt, deleteAt sql.NullTime,
@@ -86,13 +86,16 @@ func (p PostgresRepository) fetchUser(
 // If the userModel is not found, the svcError is 'errs.ErrNotFound'.
 // If there is an internal server error, the svcError is 'errs.ErrInternal'.
 // If the key is invalid, the svcError is 'errs.ErrBadRequest'.
-func (p PostgresRepository) GetUser(
+func (p repository) GetUser(
 	ctx context.Context,
 	key string,
 	value interface{},
 ) (userModel.User, errs.ChatError) {
 	if !slices.Contains([]string{"id", "username", "email"}, key) {
-		return userModel.User{}, errs.NewError(errs.ErrBadRequest, errors.New("invalid key. Valid keys are id, username, email"))
+		return userModel.User{}, errs.NewError(
+			errs.ErrBadRequest,
+			errors.New("invalid key. Valid keys are id, username, email"),
+		)
 	}
 	if value == "" {
 		return userModel.User{}, errs.NewError(errs.ErrBadRequest, errors.New("invalid value"))
@@ -121,7 +124,7 @@ func (p PostgresRepository) GetUser(
 		return userModel.User{}, getSelectError(err, key, value.(string))
 	}
 	logger.Debug("User found", zap.String("id", id.String), zap.String("username", username.String))
-	return p.fetchUser(
+	return parseUser(
 		id,
 		username,
 		email,
@@ -163,7 +166,7 @@ func buildSelectQuery(key string, value interface{}) *sqlbuilder.SelectBuilder {
 }
 
 // CreateUser inserts a userModel into the database. It takes a userModel.User object as an argument
-func (p PostgresRepository) CreateUser(ctx context.Context, tx *sql.Tx, u userModel.User) (userModel.User, errs.ChatError) {
+func (p repository) CreateUser(ctx context.Context, tx *sql.Tx, u userModel.User) (userModel.User, errs.ChatError) {
 	loginHistory, err := json.Marshal(u.LoginHistory)
 	if err != nil {
 		return userModel.User{}, errs.NewError(
@@ -219,7 +222,7 @@ func buildCreateQuery(u userModel.User, loginHistory []byte) (string, []interfac
 }
 
 // UpdateUser updates a userModel in the database. It takes a userModel.User object and a transaction as arguments
-func (p PostgresRepository) UpdateUser(ctx context.Context, tx *sql.Tx, u userModel.User) (
+func (p repository) UpdateUser(ctx context.Context, tx *sql.Tx, u userModel.User) (
 	userModel.User,
 	errs.ChatError,
 ) {
@@ -273,12 +276,12 @@ func buildUpdateQuery(u userModel.User, loginHistoryStr sql.NullString) (string,
 	return queryString, args
 }
 
-func (p PostgresRepository) DeleteUser(
+func (p repository) DeleteUser(
 	ctx context.Context,
 	tx *sql.Tx,
 	u userModel.User,
 ) (userModel.User, errs.ChatError) {
-	queryString, args := buildDeleteQuery(u)
+	queryString, args := BuildDeleteQuery(u)
 
 	var deletedAt sql.NullTime
 	err := tx.QueryRowContext(ctx, queryString, args...).Scan(&deletedAt)
@@ -294,7 +297,7 @@ func (p PostgresRepository) DeleteUser(
 	return u, nil
 }
 
-func buildDeleteQuery(u userModel.User) (string, []interface{}) {
+func BuildDeleteQuery(u userModel.User) (string, []interface{}) {
 	sb := sqlbuilder.NewUpdateBuilder()
 	sb.Update("public.user").
 		Set(
@@ -311,7 +314,7 @@ func buildDeleteQuery(u userModel.User) (string, []interface{}) {
 //
 // See 'userModel.ValidColumnsToFetch' for valid columns, 'userModel.ValidColumnsToFilter'
 // for valid filters, and 'userModel.ValidColumnsToSort' for valid sorts.
-func (p PostgresRepository) ListUsers(
+func (p repository) ListUsers(
 	ctx context.Context,
 	columns []string,
 	filters []userModel.Filter,
@@ -319,7 +322,7 @@ func (p PostgresRepository) ListUsers(
 	page userModel.Pagination,
 ) ([]userModel.User, errs.ChatError) {
 
-	queryString, args, err := buildListQuery(columns, filters, sorts, page)
+	queryString, args, err := BuildListQuery(columns, filters, sorts, page)
 	if err != nil {
 		return nil, errs.NewError(errs.ErrInternal, err)
 	}
@@ -362,7 +365,7 @@ func (p PostgresRepository) ListUsers(
 		if err != nil {
 			return nil, errs.NewError(errs.ErrInternal, err)
 		}
-		fetchUser, err := p.fetchUser(
+		fetchUser, err := parseUser(
 			id,
 			username,
 			email,
@@ -382,7 +385,7 @@ func (p PostgresRepository) ListUsers(
 	return users, nil
 }
 
-func buildListQuery(columns []string,
+func BuildListQuery(columns []string,
 	filters []userModel.Filter,
 	sorts []userModel.Sort,
 	page userModel.Pagination) (string, []interface{}, error) {
@@ -440,5 +443,5 @@ func buildListQuery(columns []string,
 }
 
 func NewPostgresUserRepository(db *sql.DB) user.ReaderWriterRepository {
-	return &PostgresRepository{db: db}
+	return &repository{db: db}
 }

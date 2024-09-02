@@ -87,8 +87,8 @@ func (_c *Service_Login_Call) RunAndReturn(run func(context.Context, string, str
 }
 
 // Refresh provides a mock function with given fields: ctx, token
-func (_m *Service) Refresh(ctx context.Context, token string) errs.ChatError {
-	ret := _m.Called(ctx, token)
+func (_m *Service) Refresh(ctx context.Context, sessionId string) errs.ChatError {
+	ret := _m.Called(ctx, sessionId)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Refresh")
@@ -96,7 +96,7 @@ func (_m *Service) Refresh(ctx context.Context, token string) errs.ChatError {
 
 	var r0 errs.ChatError
 	if rf, ok := ret.Get(0).(func(context.Context, string) errs.ChatError); ok {
-		r0 = rf(ctx, token)
+		r0 = rf(ctx, sessionId)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(errs.ChatError)

@@ -50,6 +50,20 @@ uses Postgres for store user data and Redis for session management.
 
 6. Refresh and Logout endpoints still are in development.
 
+## Decision logs
+
+- 2024/07/*: Session manager storage must be a key-value database with a ttl mechanism. First option: redis
+- 2024/07/*: I decided deploy the server on aws environment. I will use dynamodb as storage to minimize the distance
+  between the server
+  and session manager repo.
+- 2024/07/31: dynamodb is not so similar with redis as i initially think. Dynamodb ttl mechanism is not automatic and
+  the storage is not in-memory.
+  A better redis equivalent inside aws it would be ElasticCache,
+  but elasticCache is not on localstack free tier, which difficult integration test.
+  Because of that, i will use Redis. Redis docker on local env and Redislab on cloud env.
+- 2024/08/04: deploy on aws lambda is complicated and demands specific implementation. I choose deploy on aws ecs,
+  where the implementation is not so coupled
+
 ## MakeFile
 
 run all make commands with clean tests

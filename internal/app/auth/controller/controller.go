@@ -12,6 +12,7 @@ import (
 	"github.com/markbates/goth/providers/google"
 	"github.com/raffops/auth/internal/app/auth"
 	authModels "github.com/raffops/auth/internal/app/auth/model"
+	"github.com/raffops/auth/internal/app/sessionManager"
 	"github.com/raffops/auth/internal/app/user"
 	userModels "github.com/raffops/auth/internal/app/user/models"
 	"github.com/raffops/chat/pkg/errs"
@@ -67,8 +68,70 @@ func sanityCheck() {
 }
 
 type controller struct {
-	userRepo    user.ReaderRepository
-	authService auth.Service
+	userRepo       user.ReaderRepository
+	sessionService sessionManager.Service
+	authService    auth.Service
+}
+
+func (c *controller) DeleteUser(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	vars := mux.Vars(r)
+	username, ok := vars["username"]
+	if !ok {
+		http.Error(w,
+			errs.NewError(errs.ErrBadRequest, fmt.Errorf("username not found")).Error(),
+			http.StatusBadRequest,
+		)
+		return
+	}
+	userToDelete, err := c.userRepo.GetUser(ctx, "username", username)
+	if err != nil {
+		http.Error(w, err.Error(), errs.GetHttpStatusCode(err))
+		return
+	}
+
+	sessionId := r.Header.Get("Authorization")
+	sessionId, _ = strings.CutPrefix(sessionId, "Bearer ")
+
+	session, err := c.sessionService.GetSession(ctx, sessionId)
+	if err != nil {
+		http.Error(w, err.Error(), errs.GetHttpStatusCode(err))
+		return
+	}
+	if session["role"] != authModels.RoleAdmin && session["user_id"] != userToDelete.Id {
+		http.Error(w,
+			errs.NewError(errs.ErrNotAuthorized, fmt.Errorf("not authorized to delete this user")).Error(),
+			http.StatusForbidden,
+		)
+		return
+	}
+
+	err = c.authService.DeleteUser(ctx, userToDelete)
+	if err != nil {
+		http.Error(w, err.Error(), errs.GetHttpStatusCode(err))
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("User deleted"))
+}
+
+func (c *controller) Logout(w http.ResponseWriter, r *http.Request) {
+	token := r.Header.Get("Authorization")
+	token, _ = strings.CutPrefix(token, "Bearer ")
+	if token == "" {
+		http.Error(w,
+			errs.NewError(errs.ErrNotAuthorized, fmt.Errorf("token not found")).Error(),
+			http.StatusUnauthorized,
+		)
+		return
+	}
+	err := c.authService.Logout(r.Context(), token)
+	if err != nil {
+		http.Error(w, err.Error(), errs.GetHttpStatusCode(err))
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("Session logged out"))
 }
 
 func (c *controller) SignUp(w http.ResponseWriter, r *http.Request) {
@@ -223,7 +286,16 @@ func (c *controller) Refresh(w http.ResponseWriter, r *http.Request) {
 			http.StatusUnauthorized,
 		)
 	}
-	c.authService.Refresh(ctx, token)
+	err := c.authService.Refresh(ctx, token)
+	if err != nil {
+		http.Error(w, err.Error(), errs.GetHttpStatusCode(err))
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	_, errWrite := w.Write([]byte("Session refreshed"))
+	if errWrite != nil {
+		return
+	}
 }
 
 func redirectToSignUp(
@@ -248,9 +320,10 @@ func redirectToSignUp(
 	http.Redirect(w, r, "/signUp", http.StatusFound)
 }
 
-func NewController(userRepository user.ReaderRepository, authService auth.Service) auth.Controller {
+func NewController(userRepository user.ReaderRepository, sessionService sessionManager.Service, authService auth.Service) auth.Controller {
 	return &controller{
-		userRepo:    userRepository,
-		authService: authService,
+		userRepo:       userRepository,
+		sessionService: sessionService,
+		authService:    authService,
 	}
 }
